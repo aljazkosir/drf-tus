@@ -12,18 +12,24 @@ from rest_framework_tus.storage import get_save_handler
 logger = logging.getLogger(__name__)
 
 
-@receiver(received, sender=get_upload_model())
+@receiver(received)
 def on_receiving_done(sender, instance, **kwargs):
+    if not issubclass(sender, get_upload_model()):
+        return
     logger.debug('on_receiving_done: {}'.format(instance))
     save_handler = get_save_handler()
     save_handler(upload=instance).run()
 
 
-@receiver(saved, sender=get_upload_model())
+@receiver(saved)
 def on_saving_done(sender, instance, **kwargs):
+    if not issubclass(sender, get_upload_model()):
+        return
     logger.debug('on_saving_done: {}'.format(instance))
 
 
-@receiver(finished, sender=get_upload_model())
+@receiver(finished)
 def on_finished(sender, instance, **kwargs):
+    if not issubclass(sender, get_upload_model()):
+        return
     logger.debug('on_finished: {}'.format(instance))
