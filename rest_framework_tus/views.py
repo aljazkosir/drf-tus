@@ -19,8 +19,9 @@ from . import tus_api_version, tus_api_version_supported, tus_api_extensions, tu
 from .compat import reverse
 from .exceptions import Conflict
 from .models import get_upload_model
-from .serializers import UploadSerializer
+from .serializers import UploadSerializer, resolve_serializer_from_string
 from .utils import encode_upload_metadata, checksum_matches
+from rest_framework.serializers import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -271,6 +272,7 @@ class TusPatchMixin(mixins.UpdateModelMixin):
     def _is_valid_content_type(self, request):
         return request.META['CONTENT_TYPE'] == TusUploadStreamParser.media_type
 
+
 class TusTerminateMixin(mixins.DestroyModelMixin):
     def destroy(self, request, *args, **kwargs):
         # Retrieve object
@@ -300,3 +302,14 @@ class UploadViewSet(TusCreateMixin,
 
     def get_queryset(self):
         return get_upload_model().objects.all()
+
+    def get_serializer_class(self):
+        if not tus_settings.TUS_SERIALIZER_TYPE_MAPPING:
+            return super(UploadViewSet, self).get_serializer_class()
+        upload_metadata = getattr(self.request, constants.UPLOAD_METADATA_FIELD_NAME, {})
+        attachment_type = upload_metadata.get('type', '')
+        for mapping in tus_settings.TUS_SERIALIZER_TYPE_MAPPING:
+            for keyword in mapping[0]:
+                if keyword in attachment_type:
+                    return resolve_serializer_from_string(mapping[1])
+        raise ValidationError([{'type': 'Missing "type" in %s header' % constants.UPLOAD_METADATA_FIELD_NAME}])
