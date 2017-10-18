@@ -73,7 +73,7 @@ class TusHeadMixin(object):
             headers['Upload-Length'] = upload.upload_length
 
         if upload.upload_metadata:
-            headers['Upload-Metadata'] = encode_upload_metadata(json.loads(upload.upload_metadata))
+            headers['Upload-Metadata'] = encode_upload_metadata(upload.upload_metadata)
 
         # Add upload expiry to headers
         add_expiry_header(upload, headers)
@@ -112,7 +112,7 @@ class TusCreateMixin(mixins.CreateModelMixin):
         # Retrieve serializer
         serializer = self.get_serializer(data={
             'upload_length': upload_length,
-            'upload_metadata': json.dumps(upload_metadata),
+            'upload_metadata': upload_metadata,
             'filename': filename,
         })
 
