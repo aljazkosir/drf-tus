@@ -289,10 +289,24 @@ class TusTerminateMixin(mixins.DestroyModelMixin):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class SerializerMappingMixin(object):
+    def get_serializer_class(self):
+        if not tus_settings.TUS_SERIALIZER_TYPE_MAPPING:
+            return super(SerializerMappingMixin, self).get_serializer_class()
+        upload_metadata = getattr(self.request, constants.UPLOAD_METADATA_FIELD_NAME, {})
+        attachment_type = upload_metadata.get('type', '')
+        for mapping in tus_settings.TUS_SERIALIZER_TYPE_MAPPING:
+            for keyword in mapping[0]:
+                if keyword in attachment_type:
+                    return resolve_serializer_from_string(mapping[1])
+        raise ValidationError([{'type': 'Missing "type" in %s header' % constants.UPLOAD_METADATA_FIELD_NAME}])
+
+
 class UploadViewSet(TusCreateMixin,
                     TusPatchMixin,
                     TusHeadMixin,
                     TusTerminateMixin,
+                    SerializerMappingMixin,
                     GenericViewSet):
     serializer_class = UploadSerializer
     metadata_class = UploadMetadata
@@ -303,13 +317,4 @@ class UploadViewSet(TusCreateMixin,
     def get_queryset(self):
         return get_upload_model().objects.all()
 
-    def get_serializer_class(self):
-        if not tus_settings.TUS_SERIALIZER_TYPE_MAPPING:
-            return super(UploadViewSet, self).get_serializer_class()
-        upload_metadata = getattr(self.request, constants.UPLOAD_METADATA_FIELD_NAME, {})
-        attachment_type = upload_metadata.get('type', '')
-        for mapping in tus_settings.TUS_SERIALIZER_TYPE_MAPPING:
-            for keyword in mapping[0]:
-                if keyword in attachment_type:
-                    return resolve_serializer_from_string(mapping[1])
-        raise ValidationError([{'type': 'Missing "type" in %s header' % constants.UPLOAD_METADATA_FIELD_NAME}])
+
