@@ -291,6 +291,8 @@ class TusTerminateMixin(mixins.DestroyModelMixin):
 
 class SerializerMappingMixin(object):
     def get_serializer_class(self):
+        if not self.action == 'create':
+            return super(SerializerMappingMixin, self).get_serializer_class()
         if not tus_settings.TUS_SERIALIZER_TYPE_MAPPING:
             return super(SerializerMappingMixin, self).get_serializer_class()
         upload_metadata = getattr(self.request, constants.UPLOAD_METADATA_FIELD_NAME, {})
