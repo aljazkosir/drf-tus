@@ -292,7 +292,7 @@ class TusTerminateMixin(mixins.DestroyModelMixin):
 class SerializerMappingMixin(object):
     def get_serializer_class(self):
         if not self.action == 'create':
-            return super(SerializerMappingMixin, self).get_serializer_class()
+            return resolve_serializer_from_string(tus_settings.TUS_DEFAULT_SERIALIZER)
         if not tus_settings.TUS_SERIALIZER_TYPE_MAPPING:
             return super(SerializerMappingMixin, self).get_serializer_class()
         upload_metadata = getattr(self.request, constants.UPLOAD_METADATA_FIELD_NAME, {})
@@ -301,7 +301,7 @@ class SerializerMappingMixin(object):
             for keyword in mapping[0]:
                 if keyword in attachment_type:
                     return resolve_serializer_from_string(mapping[1])
-        raise ValidationError([{'type': 'Missing "type" in %s header' % constants.UPLOAD_METADATA_FIELD_NAME}])
+        raise ValidationError([{'type': _('Missing "type" in %s header') % constants.UPLOAD_METADATA_FIELD_NAME}])
 
 
 class UploadViewSet(TusCreateMixin,
