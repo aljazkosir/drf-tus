@@ -8,6 +8,7 @@ from rest_framework import status
 
 from . import tus_api_version, constants
 from .compat import decode_base64
+import binascii
 
 
 class TusMiddleware(object):
@@ -124,10 +125,16 @@ class TusMiddleware(object):
             key_value_pair = key_value_pair.strip()
 
             # Split key and value
-            key, value = key_value_pair.split(' ')
+            try:
+                key, value = key_value_pair.split(' ')
+            except ValueError:
+                return HttpResponse("Invalid key-value in metadata: %s." % key_value_pair, status=status.HTTP_400_BAD_REQUEST)
 
             # Store data
-            upload_metadata[key] = decode_base64(value.encode('utf-8')).decode('ascii')
+            try:
+                upload_metadata[key] = decode_base64(value.encode('utf-8')).decode('ascii')
+            except binascii.Error:
+                return HttpResponse("Invalid base64 string: %s" % value, status=status.HTTP_400_BAD_REQUEST)
 
         # Set upload_metadata
         setattr(request, constants.UPLOAD_METADATA_FIELD_NAME, upload_metadata)
