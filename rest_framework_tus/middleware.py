@@ -138,7 +138,7 @@ class TusMiddleware(object):
 
             # Store data
             try:
-                upload_metadata[key] = base64_decoded.decode('ascii')
+                upload_metadata[key] = base64_decoded.decode('utf-8')
             except UnicodeDecodeError:
                 return HttpResponse(
                     "Invalid characters in decoded string: %s" % base64_decoded, status=status.HTTP_400_BAD_REQUEST)
