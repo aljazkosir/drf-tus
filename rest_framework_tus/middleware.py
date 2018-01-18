@@ -130,11 +130,18 @@ class TusMiddleware(object):
             except ValueError:
                 return HttpResponse("Invalid key-value in metadata: %s." % key_value_pair, status=status.HTTP_400_BAD_REQUEST)
 
+            # Decode data
+            try:
+                base64_decoded = decode_base64(value.encode('utf-8'))
+            except binascii.Error:
+                return HttpResponse("Invalid base64 string: %s." % value, status=status.HTTP_400_BAD_REQUEST)
+
             # Store data
             try:
-                upload_metadata[key] = decode_base64(value.encode('utf-8')).decode('ascii')
-            except binascii.Error:
-                return HttpResponse("Invalid base64 string: %s" % value, status=status.HTTP_400_BAD_REQUEST)
+                upload_metadata[key] = base64_decoded.decode('ascii')
+            except UnicodeDecodeError:
+                return HttpResponse(
+                    "Invalid characters in decoded string: %s" % base64_decoded, status=status.HTTP_400_BAD_REQUEST)
 
         # Set upload_metadata
         setattr(request, constants.UPLOAD_METADATA_FIELD_NAME, upload_metadata)
