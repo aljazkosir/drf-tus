@@ -301,7 +301,7 @@ class SerializerMappingMixin(object):
             for keyword in mapping[0]:
                 if keyword in attachment_type:
                     return resolve_serializer_from_string(mapping[1])
-        raise ValidationError([{'type': _('Missing "type" in %s header') % constants.UPLOAD_METADATA_FIELD_NAME}])
+        raise ValidationError({'type': _('Missing "type" in %s header') % constants.UPLOAD_METADATA_FIELD_NAME})
 
 
 class UploadViewSet(TusCreateMixin,
